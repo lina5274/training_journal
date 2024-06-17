@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Toplevel, messagebox
 import json
 from datetime import datetime
-import random
+from tkinter import DateEntry
 
 # Файл для сохранения данных
 data_file = 'training_log.json'
@@ -52,12 +52,17 @@ class TrainingLogApp:
         self.view_button = ttk.Button(self.root, text="Просмотреть записи", command=self.view_records)
         self.view_button.grid(column=0, row=4, columnspan=2, pady=10)
 
-        self.coin_flip_button = ttk.Button(self.root, text="Flip a Coin", command=self.flip_coin)
-        self.coin_flip_button.grid(column=0, row=5, columnspan=2, pady=10)
+        self.start_date_label = ttk.Label(self.root, text="Начальная дата:")
+        self.start_date_label.grid(column=0, row=4, sticky=tk.W, padx=5, pady=5)
 
-    def flip_coin(self):
-        result = random.choice(["Heads", "Tails"])
-        messagebox.showinfo("Coin Flip Result", f"The coin landed on {result}.")
+        self.end_date_label = ttk.Label(self.root, text="Конечная дата:")
+        self.end_date_label.grid(column=0, row=5, sticky=tk.W, padx=5, pady=5)
+
+        self.start_date_entry = DateEntry(self.root)
+        self.start_date_entry.grid(column=1, row=4, sticky=tk.EW, padx=5, pady=5)
+
+        self.end_date_entry = DateEntry(self.root)
+        self.end_date_entry.grid(column=1, row=5, sticky=tk.EW, padx=5, pady=5)
 
     def add_entry(self):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -86,7 +91,7 @@ class TrainingLogApp:
         self.repetitions_entry.delete(0, tk.END)
         messagebox.showinfo("Успешно", "Запись успешно добавлена!")
 
-    def view_records(self):
+    def view_records(self, start_date=None, end_date=None):
         data = load_data()
         records_window = Toplevel(self.root)
         records_window.title("Записи тренировок")
@@ -96,6 +101,12 @@ class TrainingLogApp:
         tree.heading('Упражнение', text="Упражнение")
         tree.heading('Вес', text="Вес")
         tree.heading('Повторения', text="Повторения")
+
+        filtered_entries = [entry for entry in data if
+                            not start_date or datetime.strptime(entry['date'][:10], '%Y-%m-%d') >= datetime.strptime(
+                                start_date, '%Y-%m-%d')
+                            if not end_date or datetime.strptime(entry['date'][:10], '%Y-%m-%d') <= datetime.strptime(
+                end_date, '%Y-%m-%d')]
 
         for entry in data:
             tree.insert('', tk.END, values=(entry['date'], entry['exercise'], entry['weight'], entry['repetitions']))
