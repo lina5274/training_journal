@@ -38,6 +38,25 @@ def export_to_csv():
 
     messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
 
+def import_from_csv():
+    """Импорт данных из CSV файла."""
+    try:
+        with open('training_log.csv', 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            existing_data = load_data()
+            for row in reader:
+                new_entry = {
+                    'date': row['Дата'],
+                    'exercise': row['Упражнение'],
+                    'weight': row['Вес'],
+                    'repetitions': row['Повторения']
+                }
+                existing_data.append(new_entry)
+            save_data(existing_data)
+            messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
+    except FileNotFoundError:
+        messagebox.showerror("Ошибка", "CSV файл не найден.")
+
 class TrainingLogApp:
     def __init__(self, root):
         self.root = root
@@ -89,6 +108,9 @@ class TrainingLogApp:
 
         self.export_button = ttk.Button(self.root, text="Экспорт в CSV", command=self.export_to_csv)
         self.export_button.grid(column=0, row=6, columnspan=2, pady=10)
+
+        self.import_button = ttk.Button(self.root, text="Импорт из CSV", command=self.import_from_csv)
+        self.import_button.grid(column=0, row=7, columnspan=2, pady=10)
 
     def add_entry(self):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
