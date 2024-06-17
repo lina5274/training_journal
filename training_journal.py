@@ -8,6 +8,7 @@ import csv
 # Файл для сохранения данных
 data_file = 'training_log.json'
 
+
 def load_data():
     """Загрузка данных о тренировках из файла."""
     try:
@@ -16,10 +17,12 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
+
 def save_data(data):
     """Сохранение данных о тренировках в файл."""
     with open(data_file, 'w') as file:
         json.dump(data, file, indent=4)
+
 
 def export_to_csv():
     """Экспорт данных в CSV файл."""
@@ -36,6 +39,7 @@ def export_to_csv():
                              'Повторения': entry['repetitions']})
 
     messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
+
 
 def import_from_csv():
     """Импорт данных из CSV файла."""
@@ -55,6 +59,7 @@ def import_from_csv():
             messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
     except FileNotFoundError:
         messagebox.showerror("Ошибка", "CSV файл не найден.")
+
 
 class TrainingLogApp:
     def __init__(self, root):
@@ -111,6 +116,9 @@ class TrainingLogApp:
         self.import_button = ttk.Button(self.root, text="Импорт из CSV", command=self.import_from_csv)
         self.import_button.grid(column=0, row=7, columnspan=2, pady=10)
 
+        self.delete_button = ttk.Button(self.root, text="Удалить запись", command=self.delete_entry)
+        self.delete_button.grid(column=0, row=8, columnspan=2, pady=10)
+
     def select_item(self, event):
         selected_item = tree.selection()[0]
         selected_data = tree.item(selected_item)['values']
@@ -154,7 +162,7 @@ class TrainingLogApp:
         else:
             entry['id'] = len(data) + 1
             data.append(entry)
-            
+
         save_data(data)
 
         # Очистка полей ввода после добавления
@@ -162,6 +170,14 @@ class TrainingLogApp:
         self.weight_entry.delete(0, tk.END)
         self.repetitions_entry.delete(0, tk.END)
         messagebox.showinfo("Успешно", "Запись успешно добавлена!")
+
+    def delete_entry(self):
+        selected_item = tree.selection()[0]
+        data = load_data()
+        data.pop(int(selected_item))
+        save_data(data)
+        tree.delete(selected_item)
+        messagebox.showinfo("Успех", "Запись успешно удалена!")
 
     def view_records(self, start_date=None, end_date=None, xercise_filter=None):
         data = load_data()
@@ -188,10 +204,12 @@ class TrainingLogApp:
 
         tree.pack(expand=True, fill=tk.BOTH)
 
+
 def main():
     root = tk.Tk()
     app = TrainingLogApp(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
