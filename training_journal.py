@@ -64,6 +64,11 @@ class TrainingLogApp:
         self.end_date_entry = DateEntry(self.root)
         self.end_date_entry.grid(column=1, row=5, sticky=tk.EW, padx=5, pady=5)
 
+        self.exercise_combobox = ttk.Combobox(self.root, values=["Приседание", "Жим лежа", "Подтягивание"],
+                                              state='readonly')
+        self.exercise_combobox.current(0)
+        self.exercise_combobox.grid(column=1, row=0, sticky=tk.EW, padx=5, pady=5)
+
     def add_entry(self):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         exercise = self.exercise_entry.get()
@@ -91,7 +96,7 @@ class TrainingLogApp:
         self.repetitions_entry.delete(0, tk.END)
         messagebox.showinfo("Успешно", "Запись успешно добавлена!")
 
-    def view_records(self, start_date=None, end_date=None):
+    def view_records(self, start_date=None, end_date=None, xercise_filter=None):
         data = load_data()
         records_window = Toplevel(self.root)
         records_window.title("Записи тренировок")
@@ -108,6 +113,9 @@ class TrainingLogApp:
                             if not end_date or datetime.strptime(entry['date'][:10], '%Y-%m-%d') <= datetime.strptime(
                 end_date, '%Y-%m-%d')]
 
+        if exercise_filter:
+            filtered_entries = [entry for entry in filtered_entries if entry['exercise'] == exercise_filter]
+
         for entry in data:
             tree.insert('', tk.END, values=(entry['date'], entry['exercise'], entry['weight'], entry['repetitions']))
 
@@ -117,6 +125,9 @@ def main():
     root = tk.Tk()
     app = TrainingLogApp(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
