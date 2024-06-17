@@ -204,6 +204,24 @@ class TrainingLogApp:
 
         tree.pack(expand=True, fill=tk.BOTH)
 
+    def display_statistics(self):
+        data = load_data()
+        exercises_stats = {}
+
+        for entry in data:
+            exercise = entry['exercise']
+            if exercise not in exercises_stats:
+                exercises_stats[exercise] = {'total_reps': 0, 'total_weight': 0}
+            exercises_stats[exercise]['total_reps'] += int(entry['repetitions'])
+            exercises_stats[exercise]['total_weight'] += int(entry['weight'])
+
+        stats_message = "Statistics:\n"
+        for exercise, stats in exercises_stats.items():
+            avg_weight = stats['total_weight'] / stats['total_reps']
+            stats_message += f"{exercise}: Total Repetitions= {stats['total_reps']}, Average Weight={avg_weight}\n"
+
+        messagebox.showinfo("Exercise Statistics", stats_message)
+
 
 def main():
     root = tk.Tk()
