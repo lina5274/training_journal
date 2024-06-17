@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from tkinter import DateEntry
 import csv
+import matplotlib.pyplot as plt
 
 # Файл для сохранения данных
 data_file = 'training_log.json'
@@ -33,10 +34,10 @@ def export_to_csv():
 
         writer.writeheader()
         for entry in data:
-            writer.writerow({'Дата': entry['date'],
-                             'Упражнение': entry['exercise'],
-                             'Вес': entry['weight'],
-                             'Повторения': entry['repetitions']})
+            writer.writerow({'Дата': entry['Дата'],
+                             'Упражнение': entry['Упражнение'],
+                             'Вес': entry['Вес'],
+                             'Повторения': entry['Повторения']})
 
     messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
 
@@ -49,10 +50,10 @@ def import_from_csv():
             existing_data = load_data()
             for row in reader:
                 new_entry = {
-                    'date': row['Дата'],
-                    'exercise': row['Упражнение'],
-                    'weight': row['Вес'],
-                    'repetitions': row['Повторения']
+                    'Дата': row['Дата'],
+                    'Упражнение': row['Упражнение'],
+                    'Вес': row['Вес'],
+                    'Повторения': row['Повторения']
                 }
                 existing_data.append(new_entry)
             save_data(existing_data)
@@ -66,6 +67,25 @@ class TrainingLogApp:
         self.root = root
         root.title("Дневник тренировок")
         self.create_widgets()
+
+    def plot_exercise_statistics(exercises_stats):
+        fig, ax = plt.subplots()
+        ax.set_title('Изменение веса и повторений по упражнениям')
+
+        exercises = list(exercises_stats.keys())
+        total_reps = [stats['total_reps'] for stats in exercises_stats.values()]
+        total_weight = [stats['total_weight'] for stats in exercises_stats.values()]
+
+        ax.plot(total_reps, label='Повторения')
+        ax.plot(total_weight, label='Вес')
+
+        ax.legend()
+        plt.xlabel('Упражнения')
+        plt.ylabel('Количество')
+        plt.xticks(range(len(exercises)), exercises)
+        plt.tight_layout()
+
+        plt.show()
 
     def create_widgets(self):
         # Виджеты для ввода данных
@@ -119,6 +139,9 @@ class TrainingLogApp:
         self.delete_button = ttk.Button(self.root, text="Удалить запись", command=self.delete_entry)
         self.delete_button.grid(column=0, row=8, columnspan=2, pady=10)
 
+        self.plot_button = ttk.Button(self.root, text="Статистика", command=self.plot_progress)
+        self.plot_button.grid(column=0, row=9, columnspan=2, pady=10)
+
     def select_item(self, event):
         selected_item = tree.selection()[0]
         selected_data = tree.item(selected_item)['values']
@@ -145,10 +168,10 @@ class TrainingLogApp:
             return
 
         entry = {
-            'date': date,
-            'exercise': exercise,
-            'weight': weight,
-            'repetitions': repetitions
+            'Дата': date,
+            'Упражнение': exercise,
+            'Вес': weight,
+            'Повторения': repetitions
         }
 
         data = load_data()
@@ -191,16 +214,16 @@ class TrainingLogApp:
         tree.heading('Повторения', text="Повторения")
 
         filtered_entries = [entry for entry in data if
-                            not start_date or datetime.strptime(entry['date'][:10], '%Y-%m-%d') >= datetime.strptime(
+                            not start_date or datetime.strptime(entry['дата'][:10], '%Y-%m-%d') >= datetime.strptime(
                                 start_date, '%Y-%m-%d')
-                            if not end_date or datetime.strptime(entry['date'][:10], '%Y-%m-%d') <= datetime.strptime(
+                            if not end_date or datetime.strptime(entry['дата'][:10], '%Y-%m-%d') <= datetime.strptime(
                 end_date, '%Y-%m-%d')]
 
         if exercise_filter:
-            filtered_entries = [entry for entry in filtered_entries if entry['exercise'] == exercise_filter]
+            filtered_entries = [entry for entry in filtered_entries if entry['Упражнение'] == exercise_filter]
 
         for entry in data:
-            tree.insert('', tk.END, values=(entry['date'], entry['exercise'], entry['weight'], entry['repetitions']))
+            tree.insert('', tk.END, values=(entry['Дата'], entry['Упражнение'], entry['Вес'], entry['Повторения']))
 
         tree.pack(expand=True, fill=tk.BOTH)
 
@@ -209,18 +232,19 @@ class TrainingLogApp:
         exercises_stats = {}
 
         for entry in data:
-            exercise = entry['exercise']
+            exercise = entry['Упражнения']
             if exercise not in exercises_stats:
-                exercises_stats[exercise] = {'total_reps': 0, 'total_weight': 0}
-            exercises_stats[exercise]['total_reps'] += int(entry['repetitions'])
-            exercises_stats[exercise]['total_weight'] += int(entry['weight'])
+                exercises_stats[exercise] = {'Общее количество повторений': 0, 'Общий вес': 0}
+            exercises_stats[exercise]['Общее количество повторений'] += int(entry['Повторения'])
+            exercises_stats[exercise]['Общий вес'] += int(entry['Вес'])
 
         stats_message = "Statistics:\n"
         for exercise, stats in exercises_stats.items():
-            avg_weight = stats['total_weight'] / stats['total_reps']
-            stats_message += f"{exercise}: Total Repetitions= {stats['total_reps']}, Average Weight={avg_weight}\n"
+            avg_weight = stats['Общий вес'] / stats['Общее количество повторений']
+            stats_message += f"{exercise}: Общее количество повторений= {stats['Общее количество повторений']}, Средний вес={avg_weight}\n"
 
-        messagebox.showinfo("Exercise Statistics", stats_message)
+        messagebox.showinfo("Статистика упражнений", stats_message)
+        plot_exercise_statistics(exercises_stats)
 
 
 def main():
