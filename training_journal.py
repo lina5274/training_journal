@@ -21,7 +21,6 @@ def save_data(data):
     with open(data_file, 'w') as file:
         json.dump(data, file, indent=4)
 
-
 def export_to_csv():
     """Экспорт данных в CSV файл."""
     data = load_data()
@@ -112,6 +111,21 @@ class TrainingLogApp:
         self.import_button = ttk.Button(self.root, text="Импорт из CSV", command=self.import_from_csv)
         self.import_button.grid(column=0, row=7, columnspan=2, pady=10)
 
+    def select_item(self, event):
+        selected_item = tree.selection()[0]
+        selected_data = tree.item(selected_item)['values']
+        self.populate_fields(selected_data)
+
+    def populate_fields(self, data):
+        self.exercise_entry.delete(0, tk.END)
+        self.exercise_entry.insert(tk.END, data[1])
+
+        self.weight_entry.delete(0, tk.END)
+        self.weight_entry.insert(tk.END, data[2])
+
+        self.repetitions_entry.delete(0, tk.END)
+        self.repetitions_entry.insert(tk.END, data[3])
+
     def add_entry(self):
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         exercise = self.exercise_entry.get()
@@ -130,7 +144,17 @@ class TrainingLogApp:
         }
 
         data = load_data()
-        data.append(entry)
+        if self.existing_entry_id is not None:
+            index = next((i for i, d in enumerate(data) if d['id'] == self.existing_entry_id), None)
+            if index is not None:
+                data[index] = entry
+            else:
+                messagebox.showerror("Ошибка", "Запись не найдена.")
+                return
+        else:
+            entry['id'] = len(data) + 1
+            data.append(entry)
+            
         save_data(data)
 
         # Очистка полей ввода после добавления
