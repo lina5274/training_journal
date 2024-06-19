@@ -16,9 +16,10 @@ class TrainingLogApp:
     def __init__(self, root):
         self.root = root
         root.title("Дневник тренировок")
+        self.existing_entry_id = None
         self.create_widgets()
 
-    def plot_exercise_statistics(exercises_stats):
+    def plot_exercise_statistics(self, exercises_stats):
         fig, ax = plt.subplots()
         ax.set_title('Изменение веса и повторений по упражнениям')
 
@@ -37,7 +38,7 @@ class TrainingLogApp:
 
         plt.show()
 
-    def load_data():
+    def load_data(self):
         """Загрузка данных о тренировках из файла."""
         try:
             with open(data_file, 'r') as file:
@@ -45,14 +46,14 @@ class TrainingLogApp:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
-    def save_data(data):
+    def save_data(self, data):
         """Сохранение данных о тренировках в файл."""
         with open(data_file, 'w') as file:
             json.dump(data, file, indent=4)
 
     def export_to_csv(self):
         """Экспорт данных в CSV файл."""
-        data = load_data()
+        data = self.load_data()
         with open('training_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['Дата', 'Упражнение', 'Вес', 'Повторения']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -66,12 +67,12 @@ class TrainingLogApp:
 
         messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
 
-    def import_from_csv():
+    def import_from_csv(self):
         """Импорт данных из CSV файла."""
         try:
             with open('training_log.csv', 'r', newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
-                existing_data = load_data()
+                existing_data = self.load_data()
                 for row in reader:
                     new_entry = {
                         'Дата': row['Дата'],
@@ -80,13 +81,19 @@ class TrainingLogApp:
                         'Повторения': row['Повторения']
                     }
                     existing_data.append(new_entry)
-                save_data(existing_data)
-                messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
+                self.save_data(existing_data)
+                self.messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
         except FileNotFoundError:
-            messagebox.showerror("Ошибка", "CSV файл не найден.")
+            self.messagebox.showerror("Ошибка", "CSV файл не найден.")
 
     def create_widgets(self):
         # Виджеты для ввода данных
+        self.tree = ttk.Treeview(self.root, columns=("Дата", "Упражнение", "Вес", "Повторения"), show="headings")
+        self.tree.heading('Дата', text="Дата")
+        self.tree.heading('Упражнение', text="Упражнение")
+        self.tree.heading('Вес', text="Вес")
+        self.tree.heading('Повторения', text="Повторения")
+        self.tree.grid(row=10, column=0, columnspan=2)
         self.exercise_label = ttk.Label(self.root, text="Упражнение:")
         self.exercise_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
 
@@ -137,12 +144,14 @@ class TrainingLogApp:
         self.delete_button = ttk.Button(self.root, text="Удалить запись", command=self.delete_entry)
         self.delete_button.grid(column=0, row=8, columnspan=2, pady=10)
 
-        self.plot_button = ttk.Button(self.root, text="Статистика", command=self.plot_exercise_statistics)
+        self.plot_button = ttk.Button(self.root, text="Статистика", command=self.display_statistics)
         self.plot_button.grid(column=0, row=9, columnspan=2, pady=10)
 
+        self.tree.bind('<Double-1>', self.select_item)
+
     def select_item(self, event):
-        selected_item = tree.selection()[0]
-        selected_data = tree.item(selected_item)['values']
+        selected_item = self.tree.selection()[0]
+        selected_data = self.tree.item(selected_item)['values']
         self.populate_fields(selected_data)
 
     def populate_fields(self, data):
@@ -172,7 +181,7 @@ class TrainingLogApp:
             'Повторения': repetitions
         }
 
-        data = load_data()
+        data = self.load_data()
         if self.existing_entry_id is not None:
             index = next((i for i, d in enumerate(data) if d['id'] == self.existing_entry_id), None)
             if index is not None:
@@ -184,7 +193,8 @@ class TrainingLogApp:
             entry['id'] = len(data) + 1
             data.append(entry)
 
-        save_data(data)
+        self.save_data(data)
+        self.existing_entry_id = entry['id']
 
         # Очистка полей ввода после добавления
         self.exercise_entry.delete(0, tk.END)
@@ -193,28 +203,28 @@ class TrainingLogApp:
         messagebox.showinfo("Успешно", "Запись успешно добавлена!")
 
     def delete_entry(self):
-        selected_item = tree.selection()[0]
-        data = load_data()
+        selected_item = self.tree.selection()[0]
+        self.load_data()
         data.pop(int(selected_item))
-        save_data(data)
-        tree.delete(selected_item)
+        self.save_data(data)
+        self.tree.delete(selected_item)
         messagebox.showinfo("Успех", "Запись успешно удалена!")
 
     def view_records(self, start_date=None, end_date=None, xercise_filter=None):
-        data = load_data()
+        data = self.load_data()
         records_window = Toplevel(self.root)
         records_window.title("Записи тренировок")
 
-        tree = ttk.Treeview(records_window, columns=("Дата", "Упражнение", "Вес", "Повторения"), show="headings")
-        tree.heading('Дата', text="Дата")
-        tree.heading('Упражнение', text="Упражнение")
-        tree.heading('Вес', text="Вес")
-        tree.heading('Повторения', text="Повторения")
+        self.tree = ttk.Treeview(records_window, columns=("Дата", "Упражнение", "Вес", "Повторения"), show="headings")
+        self.tree.heading('Дата', text="Дата")
+        self.tree.heading('Упражнение', text="Упражнение")
+        self.tree.heading('Вес', text="Вес")
+        self.tree.heading('Повторения', text="Повторения")
 
         filtered_entries = [entry for entry in data if
-                            not start_date or datetime.strptime(entry['дата'][:10], '%Y-%m-%d') >= datetime.strptime(
+                            not start_date or datetime.strptime(entry['Дата'][:10], '%Y-%m-%d') >= datetime.strptime(
                                 start_date, '%Y-%m-%d')
-                            if not end_date or datetime.strptime(entry['дата'][:10], '%Y-%m-%d') <= datetime.strptime(
+                            if not end_date or datetime.strptime(entry['Дата'][:10], '%Y-%m-%d') <= datetime.strptime(
                 end_date, '%Y-%m-%d')]
 
         if exercise_filter:
@@ -226,11 +236,11 @@ class TrainingLogApp:
         tree.pack(expand=True, fill=tk.BOTH)
 
     def display_statistics(self):
-        data = load_data()
+        data = self.load_data()
         exercises_stats = {}
 
         for entry in data:
-            exercise = entry['Упражнения']
+            exercise = entry['Упражнение']
             if exercise not in exercises_stats:
                 exercises_stats[exercise] = {'Общее количество повторений': 0, 'Общий вес': 0}
             exercises_stats[exercise]['Общее количество повторений'] += int(entry['Повторения'])
@@ -242,17 +252,13 @@ class TrainingLogApp:
             stats_message += f"{exercise}: Общее количество повторений= {stats['Общее количество повторений']}, Средний вес={avg_weight}\n"
 
         messagebox.showinfo("Статистика упражнений", stats_message)
-        plot_exercise_statistics(exercises_stats)
+        self.plot_exercise_statistics(exercises_stats)
 
 
 def main():
     root = tk.Tk()
     app = TrainingLogApp(root)
     root.mainloop()
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":
