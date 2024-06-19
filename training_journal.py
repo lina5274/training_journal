@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Toplevel, messagebox
 import json
 from datetime import datetime
-from tkinter import DateEntry
+from tkcalendar import Calendar
 import csv
 import matplotlib.pyplot as plt
 
@@ -10,56 +10,6 @@ import matplotlib.pyplot as plt
 data_file = 'training_log.json'
 
 
-def load_data():
-    """Загрузка данных о тренировках из файла."""
-    try:
-        with open(data_file, 'r') as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-
-def save_data(data):
-    """Сохранение данных о тренировках в файл."""
-    with open(data_file, 'w') as file:
-        json.dump(data, file, indent=4)
-
-
-def export_to_csv():
-    """Экспорт данных в CSV файл."""
-    data = load_data()
-    with open('training_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['Дата', 'Упражнение', 'Вес', 'Повторения']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        writer.writeheader()
-        for entry in data:
-            writer.writerow({'Дата': entry['Дата'],
-                             'Упражнение': entry['Упражнение'],
-                             'Вес': entry['Вес'],
-                             'Повторения': entry['Повторения']})
-
-    messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
-
-
-def import_from_csv():
-    """Импорт данных из CSV файла."""
-    try:
-        with open('training_log.csv', 'r', newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            existing_data = load_data()
-            for row in reader:
-                new_entry = {
-                    'Дата': row['Дата'],
-                    'Упражнение': row['Упражнение'],
-                    'Вес': row['Вес'],
-                    'Повторения': row['Повторения']
-                }
-                existing_data.append(new_entry)
-            save_data(existing_data)
-            messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
-    except FileNotFoundError:
-        messagebox.showerror("Ошибка", "CSV файл не найден.")
 
 
 class TrainingLogApp:
@@ -86,6 +36,54 @@ class TrainingLogApp:
         plt.tight_layout()
 
         plt.show()
+
+    def load_data():
+        """Загрузка данных о тренировках из файла."""
+        try:
+            with open(data_file, 'r') as file:
+                return json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+    def save_data(data):
+        """Сохранение данных о тренировках в файл."""
+        with open(data_file, 'w') as file:
+            json.dump(data, file, indent=4)
+
+    def export_to_csv(self):
+        """Экспорт данных в CSV файл."""
+        data = load_data()
+        with open('training_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Дата', 'Упражнение', 'Вес', 'Повторения']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for entry in data:
+                writer.writerow({'Дата': entry['Дата'],
+                                 'Упражнение': entry['Упражнение'],
+                                 'Вес': entry['Вес'],
+                                 'Повторения': entry['Повторения']})
+
+        messagebox.showinfo("Успех", "Данные успешно экспортированы в CSV файл.")
+
+    def import_from_csv():
+        """Импорт данных из CSV файла."""
+        try:
+            with open('training_log.csv', 'r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                existing_data = load_data()
+                for row in reader:
+                    new_entry = {
+                        'Дата': row['Дата'],
+                        'Упражнение': row['Упражнение'],
+                        'Вес': row['Вес'],
+                        'Повторения': row['Повторения']
+                    }
+                    existing_data.append(new_entry)
+                save_data(existing_data)
+                messagebox.showinfo("Успех", "Данные успешно импортированы из CSV файла.")
+        except FileNotFoundError:
+            messagebox.showerror("Ошибка", "CSV файл не найден.")
 
     def create_widgets(self):
         # Виджеты для ввода данных
@@ -119,10 +117,10 @@ class TrainingLogApp:
         self.end_date_label = ttk.Label(self.root, text="Конечная дата:")
         self.end_date_label.grid(column=0, row=5, sticky=tk.W, padx=5, pady=5)
 
-        self.start_date_entry = DateEntry(self.root)
+        self.start_date_entry = Calendar(self.root, selectmode='day')
         self.start_date_entry.grid(column=1, row=4, sticky=tk.EW, padx=5, pady=5)
 
-        self.end_date_entry = DateEntry(self.root)
+        self.end_date_entry = Calendar(self.root, selectmode='day')
         self.end_date_entry.grid(column=1, row=5, sticky=tk.EW, padx=5, pady=5)
 
         self.exercise_combobox = ttk.Combobox(self.root, values=["Приседание", "Жим лежа", "Подтягивание"],
@@ -139,7 +137,7 @@ class TrainingLogApp:
         self.delete_button = ttk.Button(self.root, text="Удалить запись", command=self.delete_entry)
         self.delete_button.grid(column=0, row=8, columnspan=2, pady=10)
 
-        self.plot_button = ttk.Button(self.root, text="Статистика", command=self.plot_progress)
+        self.plot_button = ttk.Button(self.root, text="Статистика", command=self.plot_exercise_statistics)
         self.plot_button.grid(column=0, row=9, columnspan=2, pady=10)
 
     def select_item(self, event):
@@ -251,6 +249,10 @@ def main():
     root = tk.Tk()
     app = TrainingLogApp(root)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
 
 
 if __name__ == "__main__":
